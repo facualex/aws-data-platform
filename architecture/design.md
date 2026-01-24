@@ -57,21 +57,47 @@ erDiagram
     }
 ```
 
-Events:
-- product_view
-- add_to_cart
-- checkout
-- purchase
-
-Key Metrics:
-- revenue
-- conversion_rate
-- avg_order_value
-- funnel_dropoff
-
 ## 3. Architecture Overview
 
-[diagram]
+```mermaid
+flowchart LR
+    subgraph Source
+        API[FakeStore API]
+        EVENTS[Event Simulator]
+    end
+
+    subgraph Orchestration
+        AIRFLOW[Airflow Astro]
+    end
+
+    subgraph Storage
+        S3RAW[S3 Raw Zone]
+        S3STG[S3 Staging Zone]
+    end
+
+    subgraph Processing
+        TRANSFORM[Transform Jobs]
+        DQ[Data Quality Checks]
+    end
+
+    subgraph Analytics
+        WH[Warehouse]
+        BI[BI Dashboard]
+    end
+
+    API --> AIRFLOW
+    EVENTS --> AIRFLOW
+
+    AIRFLOW --> S3RAW
+    S3RAW --> TRANSFORM
+    TRANSFORM --> DQ
+    DQ --> S3STG
+    S3STG --> WH
+    WH --> BI
+
+    AIRFLOW -. retries and backoff .-> API
+    TRANSFORM -. idempotent loads .-> S3STG
+```
 
 ## 4. Data Zones
 
