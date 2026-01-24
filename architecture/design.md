@@ -6,39 +6,56 @@ Diseñar una plataforma escalable de analytics para un ecommerce. El sistema sop
 
 ## 2. Dominio
 
-Entities:
-- users
-    - user_id (PK)
-    - email
-    - country
-    - created_at
-- products
-    - product_id (PK)
-    - name
-    - category
-    - price
-    - is_active
-    - created_at
-- orders
-    - order_id (PK)
-    - product_id (FK)
-    - order_status
-    - order_total
-    - created_at
-- order_items
-  - order_item_id (PK)
-  - order_id (FK)
-  - product_id (FK)
-  - quantity
-  - unit_price
-- events
-  - event_id (PK)
-  - user_id
-  - product_id
-  - event_type
-  - event_time
-  - ingestion_time
-  - session_id
+```mermaid
+erDiagram
+    users ||--o{ orders : ingresa
+    orders ||--|{ order_items : contiene
+    products ||--o{ order_items : incluye
+    users ||--o{ eventos : genera
+    products ||--o{ eventos : involucrado_en
+
+    users {
+        int user_id PK
+        string email
+        string country
+        datetime created_at
+    }
+
+    products {
+        int product_id PK
+        string name
+        string category
+        float price
+        boolean is_active
+        datetime created_at
+    }
+
+    orders {
+        int order_id PK
+        int user_id FK
+        string order_status
+        float order_total
+        datetime created_at
+    }
+
+    order_items {
+        int order_item_id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+        float unit_price
+    }
+
+    eventos {
+        int event_id PK
+        int user_id FK
+        int product_id FK
+        string event_type
+        datetime event_time
+        datetime ingestion_time
+        string session_id
+    }
+```
 
 Events:
 - product_view
