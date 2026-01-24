@@ -8,10 +8,37 @@ Diseñar una plataforma escalable de analytics para un ecommerce. El sistema sop
 
 Entities:
 - users
+    - user_id (PK)
+    - email
+    - country
+    - created_at
 - products
+    - product_id (PK)
+    - name
+    - category
+    - price
+    - is_active
+    - created_at
 - orders
+    - order_id (PK)
+    - product_id (FK)
+    - order_status
+    - order_total
+    - created_at
 - order_items
+  - order_item_id (PK)
+  - order_id (FK)
+  - product_id (FK)
+  - quantity
+  - unit_price
 - events
+  - event_id (PK)
+  - user_id
+  - product_id
+  - event_type
+  - event_time
+  - ingestion_time
+  - session_id
 
 Events:
 - product_view
