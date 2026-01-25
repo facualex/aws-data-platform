@@ -1,8 +1,24 @@
-# E-commerce Analytics Platform — Architecture
+## 📊 Plataforma de Analytics para E-commerce (Batch + Streaming)
 
 ## 1. Objetivo
 
-Diseñar una plataforma escalable de analytics para un ecommerce. El sistema soporta procesamiento batch y streaming (tiempo real) considerando arquitectura resiliente, idempotente y con enfoques y prácticas para optimización de costos.
+Este proyecto diseña e implementa una plataforma escalable de analytics para un e-commerce, combinando procesamiento **batch** y **streaming en tiempo real** sobre AWS.
+
+La arquitectura separa claramente dos tipos de cargas:
+
+- **Batch analytics** para datos transaccionales (usuarios, órdenes, productos), orquestado con Apache Airflow, orientado a backfills, consistencia, control de costos e idempotencia.
+- **Streaming analytics** para eventos de comportamiento (clicks, vistas, add-to-cart), utilizando AWS Kinesis como log distribuido y consumidores serverless para ingestión de baja latencia.
+
+El sistema está diseñado con principios de ingeniería de datos reales:
+
+- Ingestión resiliente con retries y backoff.
+- Procesamiento idempotente y deduplicación.
+- Separación por zonas (RAW, STAGING, MART).
+- Soporte para backfills.
+- Enfoque en escalabilidad y optimización de costos.
+- Preparado para analítica de negocio (funnels, cohortes, LTV, conversión).
+
+En un entorno productivo, esta arquitectura permite capturar eventos en tiempo real mientras mantiene pipelines batch eficientes para analítica histórica y gobierno de datos.
 
 ## 2. Dominio
 
@@ -61,42 +77,59 @@ erDiagram
 
 ```mermaid
 flowchart LR
-    subgraph Source
+    %% -------- SOURCES --------
+    subgraph Sources
         API[FakeStore API]
-        EVENTS[Event Simulator]
+        EVGEN[Event Simulator]
     end
 
+    %% -------- STREAMING LAYER --------
+    subgraph Streaming
+        KIN[Kinesis Data Streams]
+        LAMBDA[Lambda Consumer]
+    end
+
+    %% -------- ORCHESTRATION --------
     subgraph Orchestration
         AIRFLOW[Airflow Astro]
     end
 
+    %% -------- STORAGE --------
     subgraph Storage
         S3RAW[S3 Raw Zone]
         S3STG[S3 Staging Zone]
     end
 
+    %% -------- PROCESSING --------
     subgraph Processing
-        TRANSFORM[Transform Jobs]
+        TRANSFORM[Transform Jobs<br/>Python / dbt]
         DQ[Data Quality Checks]
     end
 
+    %% -------- ANALYTICS --------
     subgraph Analytics
         WH[Warehouse]
         BI[BI Dashboard]
     end
 
+    %% -------- FLOWS --------
     API --> AIRFLOW
-    EVENTS --> AIRFLOW
-
     AIRFLOW --> S3RAW
+
+    EVGEN --> KIN
+    KIN --> LAMBDA
+    LAMBDA --> S3RAW
+
     S3RAW --> TRANSFORM
     TRANSFORM --> DQ
     DQ --> S3STG
     S3STG --> WH
     WH --> BI
 
+    %% -------- FAILURE DESIGN --------
     AIRFLOW -. retries and backoff .-> API
     TRANSFORM -. idempotent loads .-> S3STG
+    LAMBDA -. checkpointing .-> KIN
 ```
 
 ## 4. Data Zones
