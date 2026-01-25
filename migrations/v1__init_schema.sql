@@ -1,5 +1,8 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+CREATE TYPE order_status_enum AS ENUM ('created','paid','shipped','cancelled','refunded');
+CREATE TYPE event_type_enum AS ENUM ('view','add_to_cart','checkout','purchase');
+
 CREATE TABLE users (
     user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email TEXT NOT NULL UNIQUE,
@@ -18,8 +21,6 @@ CREATE TABLE products (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TYPE order_status_enum AS ENUM ('created','paid','shipped','cancelled','refunded');
-
 CREATE TABLE orders (
     order_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(user_id),
@@ -37,8 +38,6 @@ CREATE TABLE order_items (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE(order_id, product_id)
 );
-
-CREATE TYPE event_type_enum AS ENUM ('view','add_to_cart','checkout','purchase');
 
 CREATE TABLE events (
     event_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
